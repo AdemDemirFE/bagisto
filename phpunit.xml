@@ -21,6 +21,36 @@
             <directory suffix="Test.php">packages/Webkul/Customer/tests/Unit</directory>
         </testsuite>
 
+        <!-- CustomCommerce package testsuites. -->
+        <testsuite name="CustomCommerce Feature Test">
+            <directory suffix="Test.php">packages/Webkul/CustomCommerce/tests/Feature</directory>
+        </testsuite>
+
+        <!-- CustomReports package testsuites. -->
+        <testsuite name="CustomReports Feature Test">
+            <directory suffix="Test.php">packages/Webkul/CustomReports/tests/Feature</directory>
+        </testsuite>
+
+        <!-- CustomPayments package testsuites. -->
+        <testsuite name="CustomPayments Feature Test">
+            <directory suffix="Test.php">packages/Webkul/CustomPayments/tests/Feature</directory>
+        </testsuite>
+
+        <!-- CustomShipping package testsuites. -->
+        <testsuite name="CustomShipping Feature Test">
+            <directory suffix="Test.php">packages/Webkul/CustomShipping/tests/Feature</directory>
+        </testsuite>
+
+        <!-- CustomCustomer package testsuites. -->
+        <testsuite name="CustomCustomer Feature Test">
+            <directory suffix="Test.php">packages/Webkul/CustomCustomer/tests/Feature</directory>
+        </testsuite>
+
+        <!-- CustomMarketing package testsuites. -->
+        <testsuite name="CustomMarketing Feature Test">
+            <directory suffix="Test.php">packages/Webkul/CustomMarketing/tests/Feature</directory>
+        </testsuite>
+
         <!-- DataGrid package testsuites. -->
         <testsuite name="DataGrid Unit Test">
             <directory suffix="Test.php">packages/Webkul/DataGrid/tests/Unit</directory>
