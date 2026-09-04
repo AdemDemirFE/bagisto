@@ -34,6 +34,10 @@ class CustomerDataGrid extends DataGrid
     {
         $tablePrefix = DB::getTablePrefix();
 
+        $fullNameExpression = DB::getDriverName() === 'pgsql'
+            ? '('.$tablePrefix.'customers.first_name || \' \' || '.$tablePrefix.'customers.last_name)'
+            : 'CONCAT('.$tablePrefix.'customers.first_name, " ", '.$tablePrefix.'customers.last_name)';
+
         $queryBuilder = DB::table('customers')
             ->leftJoin('addresses', function ($join) {
                 $join->on('customers.id', '=', 'addresses.customer_id')
@@ -53,13 +57,17 @@ class CustomerDataGrid extends DataGrid
             )
             ->addSelect(DB::raw('COUNT(DISTINCT '.$tablePrefix.'addresses.id) as address_count'))
             ->addSelect(DB::raw('COUNT(DISTINCT '.$tablePrefix.'orders.id) as order_count'))
-            ->addSelect(DB::raw('CONCAT('.$tablePrefix.'customers.first_name, " ", '.$tablePrefix.'customers.last_name) as full_name'))
+            ->addSelect(DB::raw($fullNameExpression.' as full_name'))
             ->groupBy('customers.id');
+
+        if (DB::getDriverName() === 'pgsql') {
+            $queryBuilder->groupBy('customer_groups.name');
+        }
 
         $this->addFilter('channel_id', 'customers.channel_id');
         $this->addFilter('customer_id', 'customers.id');
         $this->addFilter('email', 'customers.email');
-        $this->addFilter('full_name', DB::raw('CONCAT('.$tablePrefix.'customers.first_name, " ", '.$tablePrefix.'customers.last_name)'));
+        $this->addFilter('full_name', DB::raw($fullNameExpression));
         $this->addFilter('group', 'customer_groups.name');
         $this->addFilter('phone', 'customers.phone');
         $this->addFilter('status', 'customers.status');

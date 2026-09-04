@@ -16,6 +16,12 @@ class OrderRefundDataGrid extends DataGrid
      */
     public function prepareQueryBuilder()
     {
+        $tablePrefix = DB::getTablePrefix();
+
+        $billedToExpression = DB::getDriverName() === 'pgsql'
+            ? '('.$tablePrefix.'order_address_billing.first_name || \' \' || '.$tablePrefix.'order_address_billing.last_name)'
+            : 'CONCAT('.$tablePrefix.'order_address_billing.first_name, " ", '.$tablePrefix.'order_address_billing.last_name)';
+
         $queryBuilder = DB::table('refunds')
             ->leftJoin('orders', 'refunds.order_id', '=', 'orders.id')
             ->leftJoin('addresses as order_address_billing', function ($leftJoin) {
@@ -29,9 +35,9 @@ class OrderRefundDataGrid extends DataGrid
                 'refunds.base_grand_total',
                 'refunds.created_at'
             )
-            ->addSelect(DB::raw('CONCAT('.DB::getTablePrefix().'order_address_billing.first_name, " ", '.DB::getTablePrefix().'order_address_billing.last_name) as billed_to'));
+            ->addSelect(DB::raw($billedToExpression.' as billed_to'));
 
-        $this->addFilter('billed_to', DB::raw('CONCAT('.DB::getTablePrefix().'order_address_billing.first_name, " ", '.DB::getTablePrefix().'order_address_billing.last_name)'));
+        $this->addFilter('billed_to', DB::raw($billedToExpression));
         $this->addFilter('id', 'refunds.id');
         $this->addFilter('increment_id', 'orders.increment_id');
         $this->addFilter('state', 'refunds.state');

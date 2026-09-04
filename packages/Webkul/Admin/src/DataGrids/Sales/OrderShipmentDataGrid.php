@@ -23,6 +23,18 @@ class OrderShipmentDataGrid extends DataGrid
      */
     public function prepareQueryBuilder()
     {
+        $tablePrefix = DB::getTablePrefix();
+
+        $isPostgres = DB::getDriverName() === 'pgsql';
+
+        $shippedToExpression = $isPostgres
+            ? '('.$tablePrefix.'order_address_shipping.first_name || \' \' || '.$tablePrefix.'order_address_shipping.last_name)'
+            : 'CONCAT('.$tablePrefix.'order_address_shipping.first_name, " ", '.$tablePrefix.'order_address_shipping.last_name)';
+
+        $inventorySourceExpression = $isPostgres
+            ? '(CASE WHEN '.$tablePrefix.'shipments.inventory_source_id IS NOT NULL THEN '.$tablePrefix.'inventory_sources.name ELSE '.$tablePrefix.'shipments.inventory_source_name END)'
+            : '(IF('.$tablePrefix.'shipments.inventory_source_id IS NOT NULL,'.$tablePrefix.'inventory_sources.name, '.$tablePrefix.'shipments.inventory_source_name))';
+
         $queryBuilder = DB::table('shipments')
             ->leftJoin('addresses as order_address_shipping', function ($leftJoin) {
                 $leftJoin->on('order_address_shipping.order_id', '=', 'shipments.order_id')
@@ -37,13 +49,13 @@ class OrderShipmentDataGrid extends DataGrid
                 'orders.created_at as order_date',
                 'shipments.created_at as shipment_created_at'
             )
-            ->addSelect(DB::raw('CONCAT('.DB::getTablePrefix().'order_address_shipping.first_name, " ", '.DB::getTablePrefix().'order_address_shipping.last_name) as shipped_to'))
-            ->selectRaw('IF('.DB::getTablePrefix().'shipments.inventory_source_id IS NOT NULL,'.DB::getTablePrefix().'inventory_sources.name, '.DB::getTablePrefix().'shipments.inventory_source_name) as inventory_source_name');
+            ->addSelect(DB::raw($shippedToExpression.' as shipped_to'))
+            ->selectRaw($inventorySourceExpression.' as inventory_source_name');
 
         $this->addFilter('shipment_id', 'shipments.id');
         $this->addFilter('shipment_order_id', 'orders.increment_id');
         $this->addFilter('shipment_total_qty', 'shipments.total_qty');
-        $this->addFilter('inventory_source_name', DB::raw('IF('.DB::getTablePrefix().'shipments.inventory_source_id IS NOT NULL,'.DB::getTablePrefix().'inventory_sources.name, '.DB::getTablePrefix().'shipments.inventory_source_name)'));
+        $this->addFilter('inventory_source_name', DB::raw($inventorySourceExpression));
         $this->addFilter('order_date', 'orders.created_at');
         $this->addFilter('shipment_created_at', 'shipments.created_at');
         $this->addFilter('shipped_to', DB::raw('CONCAT('.DB::getTablePrefix().'order_address_shipping.first_name, " ", '.DB::getTablePrefix().'order_address_shipping.last_name)'));

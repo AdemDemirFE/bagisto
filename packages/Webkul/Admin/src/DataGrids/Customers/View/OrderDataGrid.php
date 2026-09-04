@@ -18,6 +18,20 @@ class OrderDataGrid extends DataGrid
     {
         $tablePrefix = DB::getTablePrefix();
 
+        $isPostgres = DB::getDriverName() === 'pgsql';
+
+        $fullNameExpression = $isPostgres
+            ? '('.$tablePrefix.'order_address_billing.first_name || \' \' || '.$tablePrefix.'order_address_billing.last_name)'
+            : 'CONCAT('.$tablePrefix.'order_address_billing.first_name, " ", '.$tablePrefix.'order_address_billing.last_name)';
+
+        $locationExpression = $isPostgres
+            ? '('.$tablePrefix.'order_address_billing.address || \', \' || '.$tablePrefix.'order_address_billing.city || \', \' || '.$tablePrefix.'order_address_billing.state || \', \' || '.$tablePrefix.'order_address_billing.country)'
+            : 'CONCAT('.$tablePrefix.'order_address_billing.address, ", ", '.$tablePrefix.'order_address_billing.city,", ", '.$tablePrefix.'order_address_billing.state, ", ", '.$tablePrefix.'order_address_billing.country)';
+
+        $customerNameExpression = $isPostgres
+            ? '('.$tablePrefix.'orders.customer_first_name || \' \' || '.$tablePrefix.'orders.customer_last_name)'
+            : 'CONCAT('.$tablePrefix.'orders.customer_first_name, " ", '.$tablePrefix.'orders.customer_last_name)';
+
         $queryBuilder = DB::table('orders')
             ->leftJoin('addresses as order_address_billing', function ($leftJoin) {
                 $leftJoin->on('order_address_billing.order_id', '=', 'orders.id')
@@ -34,12 +48,12 @@ class OrderDataGrid extends DataGrid
                 'status',
                 'order_address_billing.email as customer_email',
                 'orders.cart_id as image',
-                DB::raw('CONCAT('.$tablePrefix.'order_address_billing.first_name, " ", '.$tablePrefix.'order_address_billing.last_name) as full_name'),
-                DB::raw('CONCAT('.$tablePrefix.'order_address_billing.address, ", ", '.$tablePrefix.'order_address_billing.city,", ", '.$tablePrefix.'order_address_billing.state, ", ", '.$tablePrefix.'order_address_billing.country) as location')
+                DB::raw($fullNameExpression.' as full_name'),
+                DB::raw($locationExpression.' as location')
             )
             ->where('orders.customer_id', request()->route('id'));
 
-        $this->addFilter('full_name', DB::raw('CONCAT('.$tablePrefix.'orders.customer_first_name, " ", '.$tablePrefix.'orders.customer_last_name)'));
+        $this->addFilter('full_name', DB::raw($customerNameExpression));
         $this->addFilter('created_at', 'orders.created_at');
 
         return $queryBuilder;

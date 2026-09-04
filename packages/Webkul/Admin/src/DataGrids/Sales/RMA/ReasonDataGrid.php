@@ -13,6 +13,12 @@ class ReasonDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
+        $tablePrefix = DB::getTablePrefix();
+
+        $resolutionTypesExpression = DB::getDriverName() === 'pgsql'
+            ? 'STRING_AGG('.$tablePrefix.'rma_reason_resolutions.resolution_type, \', \')'
+            : 'GROUP_CONCAT('.$tablePrefix.'rma_reason_resolutions.resolution_type SEPARATOR ", ")';
+
         $queryBuilder = DB::table('rma_reasons')
             ->addSelect(
                 'rma_reasons.id',
@@ -20,14 +26,14 @@ class ReasonDataGrid extends DataGrid
                 'rma_reasons.status',
                 'rma_reasons.position',
                 'rma_reasons.created_at',
-                DB::raw('GROUP_CONCAT('.DB::getTablePrefix().'rma_reason_resolutions.resolution_type SEPARATOR ", ") as resolution_types'),
+                DB::raw($resolutionTypesExpression.' as resolution_types'),
             )
             ->leftJoin('rma_reason_resolutions', 'rma_reasons.id', '=', 'rma_reason_resolutions.rma_reason_id')
             ->groupBy('rma_reasons.id');
 
         $this->addFilter('id', 'rma_reasons.id');
         $this->addFilter('created_at', 'rma_reasons.created_at');
-        $this->addFilter('resolution_types', DB::raw('GROUP_CONCAT('.DB::getTablePrefix().'rma_reason_resolutions.resolution_type SEPARATOR ", ")'));
+        $this->addFilter('resolution_types', DB::raw($resolutionTypesExpression));
 
         return $queryBuilder;
     }

@@ -15,14 +15,26 @@ class SitemapDataGrid extends DataGrid
      */
     public function prepareQueryBuilder()
     {
+        $tablePrefix = DB::getTablePrefix();
+
+        $isPostgres = DB::getDriverName() === 'pgsql';
+
+        $channelExpression = $isPostgres
+            ? 'STRING_AGG(DISTINCT '.$tablePrefix.'channels.code, \',\')'
+            : 'GROUP_CONCAT(DISTINCT '.$tablePrefix.'channels.code)';
+
+        $hostnamesExpression = $isPostgres
+            ? 'STRING_AGG(DISTINCT ('.$tablePrefix.'channels.id::text || \'::\' || '.$tablePrefix.'channels.code || \'::\' || '.$tablePrefix.'channels.hostname), \'||\')'
+            : 'GROUP_CONCAT(DISTINCT CONCAT('.$tablePrefix.'channels.id, "::", '.$tablePrefix.'channels.code, "::", '.$tablePrefix.'channels.hostname) SEPARATOR "||")';
+
         $queryBuilder = DB::table('sitemaps')
             ->select(
                 'sitemaps.id',
                 'sitemaps.file_name',
                 'sitemaps.path'
             )
-            ->addSelect(DB::raw('GROUP_CONCAT(DISTINCT '.DB::getTablePrefix().'channels.code) as channel'))
-            ->addSelect(DB::raw('GROUP_CONCAT(DISTINCT CONCAT('.DB::getTablePrefix().'channels.id, "::", '.DB::getTablePrefix().'channels.code, "::", '.DB::getTablePrefix().'channels.hostname) SEPARATOR "||") as channel_hostnames'))
+            ->addSelect(DB::raw($channelExpression.' as channel'))
+            ->addSelect(DB::raw($hostnamesExpression.' as channel_hostnames'))
             ->leftJoin('sitemap_channels', 'sitemaps.id', '=', 'sitemap_channels.sitemap_id')
             ->leftJoin('channels', 'sitemap_channels.channel_id', '=', 'channels.id')
             ->groupBy('sitemaps.id', 'sitemaps.file_name', 'sitemaps.path');

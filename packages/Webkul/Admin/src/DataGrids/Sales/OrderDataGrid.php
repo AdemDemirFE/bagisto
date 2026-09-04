@@ -18,6 +18,22 @@ class OrderDataGrid extends DataGrid
      */
     public function prepareQueryBuilder()
     {
+        $tablePrefix = DB::getTablePrefix();
+
+        $isPostgres = DB::getDriverName() === 'pgsql';
+
+        $methodExpression = $isPostgres
+            ? 'STRING_AGG('.$tablePrefix.'order_payment.method, \'|\')'
+            : 'GROUP_CONCAT('.$tablePrefix.'order_payment.method SEPARATOR "|")';
+
+        $fullNameExpression = $isPostgres
+            ? '('.$tablePrefix.'orders.customer_first_name || \' \' || '.$tablePrefix.'orders.customer_last_name)'
+            : 'CONCAT('.$tablePrefix.'orders.customer_first_name, " ", '.$tablePrefix.'orders.customer_last_name)';
+
+        $locationExpression = $isPostgres
+            ? '('.$tablePrefix.'order_address_billing.city || \', \' || '.$tablePrefix.'order_address_billing.state || \', \' || '.$tablePrefix.'order_address_billing.country)'
+            : 'CONCAT('.$tablePrefix.'order_address_billing.city, ", ", '.$tablePrefix.'order_address_billing.state,", ", '.$tablePrefix.'order_address_billing.country)';
+
         $queryBuilder = DB::table('orders')
             ->leftJoin('addresses as order_address_shipping', function ($leftJoin) {
                 $leftJoin->on('order_address_shipping.order_id', '=', 'orders.id')
@@ -30,7 +46,7 @@ class OrderDataGrid extends DataGrid
             ->leftJoin('order_payment', 'orders.id', '=', 'order_payment.order_id')
             ->select(
                 'orders.id',
-                DB::raw('GROUP_CONCAT('.DB::getTablePrefix().'order_payment.method SEPARATOR "|") as method'),
+                DB::raw($methodExpression.' as method'),
                 'orders.increment_id',
                 'orders.base_grand_total',
                 'orders.created_at',
@@ -39,12 +55,20 @@ class OrderDataGrid extends DataGrid
                 'status',
                 'customer_email',
                 'orders.cart_id as items',
-                DB::raw('CONCAT('.DB::getTablePrefix().'orders.customer_first_name, " ", '.DB::getTablePrefix().'orders.customer_last_name) as full_name'),
-                DB::raw('CONCAT('.DB::getTablePrefix().'order_address_billing.city, ", ", '.DB::getTablePrefix().'order_address_billing.state,", ", '.DB::getTablePrefix().'order_address_billing.country) as location')
+                DB::raw($fullNameExpression.' as full_name'),
+                DB::raw($locationExpression.' as location')
             )
             ->groupBy('orders.id');
 
-        $this->addFilter('full_name', DB::raw('CONCAT('.DB::getTablePrefix().'orders.customer_first_name, " ", '.DB::getTablePrefix().'orders.customer_last_name)'));
+        if ($isPostgres) {
+            $queryBuilder->groupBy(
+                'order_address_billing.city',
+                'order_address_billing.state',
+                'order_address_billing.country'
+            );
+        }
+
+        $this->addFilter('full_name', DB::raw($fullNameExpression));
         $this->addFilter('created_at', 'orders.created_at');
 
         return $queryBuilder;
