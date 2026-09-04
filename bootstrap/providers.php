@@ -11,7 +11,16 @@ use Webkul\Checkout\Providers\CheckoutServiceProvider;
 use Webkul\CMS\Providers\CMSServiceProvider;
 use Webkul\Core\Providers\CoreServiceProvider;
 use Webkul\Core\Providers\EnvValidatorServiceProvider;
+use Webkul\CustomAdmin\Providers\CustomAdminServiceProvider;
+use Webkul\CustomAI\Providers\CustomAIServiceProvider;
+use Webkul\CustomCheckout\Providers\CustomCheckoutServiceProvider;
+use Webkul\CustomCommerce\Providers\CustomCommerceServiceProvider;
+use Webkul\CustomCustomer\Providers\CustomCustomerServiceProvider;
 use Webkul\Customer\Providers\CustomerServiceProvider;
+use Webkul\CustomMarketing\Providers\CustomMarketingServiceProvider;
+use Webkul\CustomPayments\Providers\CustomPaymentsServiceProvider;
+use Webkul\CustomReports\Providers\CustomReportsServiceProvider;
+use Webkul\CustomShipping\Providers\CustomShippingServiceProvider;
 use Webkul\DataGrid\Providers\DataGridServiceProvider;
 use Webkul\DataTransfer\Providers\DataTransferServiceProvider;
 use Webkul\DebugBar\Providers\DebugBarServiceProvider;
@@ -57,6 +66,15 @@ return [
     AttributeServiceProvider::class,
     BookingProductServiceProvider::class,
     CMSServiceProvider::class,
+    CustomAdminServiceProvider::class,
+    CustomAIServiceProvider::class,
+    CustomCheckoutServiceProvider::class,
+    CustomCommerceServiceProvider::class,
+    CustomCustomerServiceProvider::class,
+    CustomMarketingServiceProvider::class,
+    CustomPaymentsServiceProvider::class,
+    CustomReportsServiceProvider::class,
+    CustomShippingServiceProvider::class,
     CartRuleServiceProvider::class,
     CatalogRuleServiceProvider::class,
     CategoryServiceProvider::class,
